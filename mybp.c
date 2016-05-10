@@ -3,19 +3,21 @@
 #include <time.h>
 #include <math.h>
 
-#define DATA  820  /* number of neuron 每层神经元的数目 */
-#define IN 2  /* 每个样本有多少输入变量 */
+#define DATA  27  /* 训练样本的数量 */
+#define IN 4  /* 每个样本有多少输入变量 */
 #define OUT 1  /* 每个样本有多少个输出变量 */
 #define NEURON 45  /* 神经元数量 */
-#define TRAINC 2000000  /* 训练次数上限 */
+#define TRAINC 200000000  /* 训练次数上限 */
 /* 学习率 */
 #define A  0.2
 #define B  0.4
 #define a  0.2
 #define b  0.3
+/* 误差 */
+#define ERROR 0.012
 
-#define TRAIN_FILE_INPUT "./in.txt"
-#define TRAIN_FILE_OUTPUT "./out.txt"
+#define TRAIN_FILE_INPUT "./train_in.txt"
+#define TRAIN_FILE_OUTPUT "./train_out.txt"
 
 double data_in[DATA][IN];  /* 存储DATA个样本，每个样本IN个输入 */
 double data_out[DATA][OUT];  /* 存储DATA个样本，每个样本OUT个输出 */
@@ -29,6 +31,7 @@ double error;  /* 误差 */
 double max_in[IN], min_in[IN], max_out[OUT], min_out[OUT];
 
 /* 写训练数据 */
+/*
 void write_test() {
 
 	FILE *fp_input, *fp_output;
@@ -53,6 +56,7 @@ void write_test() {
 	fclose(fp_input);
 	fclose(fp_output);
 }
+*/
 
 /* 读训练数据 */
 void read_data() {
@@ -75,7 +79,7 @@ void read_data() {
 	}
 	for (i = 0; i < DATA; ++i) {
 		for (j = 0; j < OUT; ++j)
-			fscanf(fp_tmp,"%lf",&data_out[i][j]);
+			fscanf(fp_tmp, "%lf", &data_out[i][j]);
 	}
 	fclose(fp_tmp);
 }
@@ -223,23 +227,17 @@ void  train_network() {
 		}
 		++time;
 		printf("%d  %lf\n",time, error / DATA);
-	} while (time < TRAINC && error / DATA > 0.01);
+	} while (time < TRAINC && error / DATA > ERROR);
 }
 
 
 
 int main(void)
 {
-	write_test();
+	//write_test();
 	read_data();
 	init_bpnetwork();
 	train_network();
-	printf("%lf \n",result(6,8) );
-	printf("%lf \n",result(2.1,7) );
-	printf("%lf \n",result(4.3,8) );
-	printf("%lf \n",6.0 * 8.0);
-	printf("%lf \n",2.1 * 7.0 );
-	printf("%lf \n",4.3 * 8.0 );
 	//writeNEURON();
 	return 0;
 }
