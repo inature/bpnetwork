@@ -7,7 +7,7 @@
 #define IN 2  /* 每个样本有多少输入变量 */
 #define OUT 1  /* 每个样本有多少个输出变量 */
 #define NEURON 45  /* 神经元数量 */
-#define TRAINC 20000  /* 训练次数上限 */
+#define TRAINC 2000000  /* 训练次数上限 */
 /* 学习率 */
 #define A  0.2
 #define B  0.4
@@ -48,7 +48,7 @@ void write_test() {
 		opeator1 = rand() % 1000 / 100.0;
 		opeator2 = rand() % 1000 / 100.0;
 		fprintf(fp_input, "%lf  %lf\n", opeator1, opeator2);
-		fprintf(fp_output, "%lf \n", opeator1 + opeator2);
+		fprintf(fp_output, "%lf \n", opeator1 * opeator2);
 	}
 	fclose(fp_input);
 	fclose(fp_output);
@@ -221,8 +221,8 @@ void  train_network() {
 				error += fabs((output_data[j] - data_out[i][j]) / data_out[i][j]);
 			back_update(i);
 		}
-		printf("%d  %lf\n",time, error / DATA);
 		++time;
+		printf("%d  %lf\n",time, error / DATA);
 	} while (time < TRAINC && error / DATA > 0.01);
 }
 
@@ -237,6 +237,9 @@ int main(void)
 	printf("%lf \n",result(6,8) );
 	printf("%lf \n",result(2.1,7) );
 	printf("%lf \n",result(4.3,8) );
+	printf("%lf \n",6.0 * 8.0);
+	printf("%lf \n",2.1 * 7.0 );
+	printf("%lf \n",4.3 * 8.0 );
 	//writeNEURON();
 	return 0;
 }
