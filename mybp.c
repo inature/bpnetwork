@@ -8,14 +8,17 @@
 #define OUT 1  /* 每个样本有多少个输出变量 */
 #define NEURON 45  /* 神经元数量 */
 #define TRAINC 200000000  /* 训练次数上限 */
+
 /* 学习率 */
 #define A  0.2
 #define B  0.4
 #define a  0.2
 #define b  0.3
+
 /* 误差 */
 #define ERROR 0.012
 
+/* 存放训练数据的文件 */
 #define TRAIN_FILE_INPUT "./train_in.txt"
 #define TRAIN_FILE_OUTPUT "./train_out.txt"
 
@@ -67,8 +70,8 @@ void read_data() {
 		fprintf(stderr, "can not open the in file\n");
 		exit(EXIT_FAILURE);
 	}
-	for (i = 0; i < DATA; ++i) {
-		for (j = 0; j < IN; ++j)
+	for (i = 0; i < DATA; i++) {
+		for (j = 0; j < IN; j++)
 			fscanf(fp_tmp, "%lf", &data_in[i][j]);
 	}
 	fclose(fp_tmp);
@@ -77,8 +80,8 @@ void read_data() {
 		fprintf(stderr, "can not open the out file\n");
 		exit(EXIT_FAILURE);
 	}
-	for (i = 0; i < DATA; ++i) {
-		for (j = 0; j < OUT; ++j)
+	for (i = 0; i < DATA; i++) {
+		for (j = 0; j < OUT; j++)
 			fscanf(fp_tmp, "%lf", &data_out[i][j]);
 	}
 	fclose(fp_tmp);
@@ -89,41 +92,41 @@ void init_bpnetwork() {
 
 	int i, j;
 
-	for (i = 0; i < IN; ++i) {
+	for (i = 0; i < IN; i++) {
 		min_in[i] = max_in[i] = data_in[0][i];
-		for (j = 0; j < DATA; ++j) {
+		for (j = 0; j < DATA; j++) {
 			max_in[i]=max_in[i] > data_in[j][i] ? max_in[i] : data_in[j][i];
 			min_in[i]=min_in[i] < data_in[j][i] ? min_in[i] : data_in[j][i];
 		}
 	}
 
-	for (i = 0; i < OUT; ++i) {
+	for (i = 0; i < OUT; i++) {
 		min_out[i] = max_out[i] = data_out[0][i];
-		for (j = 0; j < DATA; ++j) {
+		for (j = 0; j < DATA; j++) {
 			max_out[i] = max_out[i] > data_out[j][i] ? max_out[i] : data_out[j][i];
 			min_out[i] = min_out[i] < data_out[j][i] ? min_out[i] : data_out[j][i];
 		}
 	}
 
-	for (i = 0; i < IN; ++i) {
-		for (j = 0; j < DATA; ++j)
+	for (i = 0; i < IN; i++) {
+		for (j = 0; j < DATA; j++)
 			data_in[j][i] = (data_in[j][i] - min_in[i] + 1) / (max_in[i] - min_in[i] + 1);
 	}
 
-	for (i = 0; i < OUT; ++i) {
-		for (j = 0; j < DATA; ++j)
+	for (i = 0; i < OUT; i++) {
+		for (j = 0; j < DATA; j++)
 			data_out[j][i] = (data_out[j][i] - min_out[i] + 1) / (max_out[i] - min_out[i] + 1);
 	}
 
-	for (i = 0; i < NEURON; ++i) {	
-		for (j = 0; j < IN; ++j) {	
+	for (i = 0; i < NEURON; i++) {	
+		for (j = 0; j < IN; j++) {	
 			input_weight[i][j] = rand() * 2.0 / RAND_MAX - 1;
 			input_delta[i][j] = 0;
 		}
 	}
 
-	for (i = 0; i < OUT; ++i) {
-		for (j = 0; j < NEURON; ++j) {
+	for (i = 0; i < OUT; i++) {
+		for (j = 0; j < NEURON; j++) {
 			output_weight[i][j] = rand() * 2.0 / RAND_MAX - 1;
 			output_delta[i][j] = 0;
 		}
@@ -135,17 +138,17 @@ void comput_output(int var) {
 
 	int i,j;
 	double sum;
-	for (i = 0; i < NEURON; ++i) {
+	for (i = 0; i < NEURON; i++) {
 		sum = 0;
-		for (j = 0; j < IN; ++j)
+		for (j = 0; j < IN; j++)
 			sum += input_weight[i][j] * data_in[var][j];
 
 		activate[i] = 1 / (1 + exp(-1 * sum));
 	}
 
-	for (i = 0; i < OUT; ++i) {
+	for (i = 0; i < OUT; i++) {
 		sum = 0;
-		for (j = 0; j < NEURON; ++j)
+		for (j = 0; j < NEURON; j++)
 			sum += output_weight[i][j] * activate[j];
 
 		output_data[i]=sum;
@@ -156,18 +159,18 @@ void comput_output(int var) {
 void back_update(int var) {
 
 	int i, j;
-	double t;
-	for (i = 0; i < NEURON; ++i) {
-		t = 0;
-		for (j = 0; j < OUT; ++j) {
-			t += (output_data[j] - data_out[var][j]) * output_weight[j][i];
+	double tmp;
+	for (i = 0; i < NEURON; i++) {
+		tmp = 0;
+		for (j = 0; j < OUT; j++) {
+			tmp += (output_data[j] - data_out[var][j]) * output_weight[j][i];
 
 			output_delta[j][i] = A * output_delta[j][i] + B * (output_data[j]-data_out[var][j]) * activate[i];
 			output_weight[j][i] -= output_delta[j][i];
 		}
 
-		for (j = 0; j < IN; ++j) {
-			input_delta[i][j] = a * input_delta[i][j] + b * t * activate[i] * (1-activate[i]) * data_in[var][j];
+		for (j = 0; j < IN; j++) {
+			input_delta[i][j] = a * input_delta[i][j] + b * tmp * activate[i] * (1-activate[i]) * data_in[var][j];
 			input_weight[i][j] -= input_delta[i][j];
 		}
 	}
@@ -180,13 +183,13 @@ double result(double var1,double var2) {
 	var1 = (var1 - min_in[0] + 1) / (max_in[0] - min_in[0] + 1);
 	var2 = (var2 - min_in[1] + 1) / (max_in[1] - min_in[1] + 1);
 
-	for (i = 0; i < NEURON; ++i) {
+	for (i = 0; i < NEURON; i++) {
 		sum = 0;
 		sum = input_weight[i][0] * var1 + input_weight[i][1] * var2;
 		activate[i] = 1 / (1 + exp(-1 * sum));
 	}
 	sum = 0;
-	for (j = 0; j < NEURON; ++j)
+	for (j = 0; j < NEURON; j++)
 		sum += output_weight[0][j] * activate[j];
 
 	return sum * (max_out[0] - min_out[0] + 1) + min_out[0] - 1;
@@ -219,21 +222,20 @@ void  train_network() {
 	int i, j, time = 0;
 	do {
 		error = 0.0;
-		for (i = 0; i < DATA; ++i) {
+		for (i = 0; i < DATA; i++) {
 			comput_output(i);
-			for (j = 0; j < OUT; ++j)
+			for (j = 0; j < OUT; j++)
 				error += fabs((output_data[j] - data_out[i][j]) / data_out[i][j]);
 			back_update(i);
 		}
-		++time;
+		time++;
 		printf("%d  %lf\n",time, error / DATA);
 	} while (time < TRAINC && error / DATA > ERROR);
 }
 
 
 
-int main(void)
-{
+int main(int argc, char *argv[]) {
 	//write_test();
 	read_data();
 	init_bpnetwork();
