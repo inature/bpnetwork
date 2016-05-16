@@ -6,14 +6,11 @@
 #define DATA  27  /* 训练样本的数量 */
 #define IN 4  /* 每个样本有多少输入变量 */
 #define OUT 1  /* 每个样本有多少个输出变量 */
-#define NEURON 45  /* 神经元数量 */
-#define TRAINC 200000000  /* 训练次数上限 */
+#define NEURON 38  /* 神经元数量 */
+#define TRAINC 2000000000  /* 训练次数上限 */
 
 /* 学习率 */
-#define A  0.2
-#define B  0.4
-#define a  0.2
-#define b  0.3
+#define LEARN  0.2
 
 /* 误差 */
 #define ERROR 0.012
@@ -21,6 +18,9 @@
 /* 存放训练数据的文件 */
 #define TRAIN_FILE_INPUT "./train_in.txt"
 #define TRAIN_FILE_OUTPUT "./train_out.txt"
+
+/* 存放训练后的权值 */
+#define NEURON_WEIGHT "./neuron.txt"
 
 double data_in[DATA][IN];  /* 存储DATA个样本，每个样本IN个输入 */
 double data_out[DATA][OUT];  /* 存储DATA个样本，每个样本OUT个输出 */
@@ -31,35 +31,7 @@ double output_delta[OUT][NEURON];  /* 输出权重的修正量 */
 double activate[NEURON];  /* 神经元激活函数对外的输出 */
 double output_data[OUT];  /* BP神经网络的输出 */
 double error;  /* 误差 */
-double max_in[IN], min_in[IN], max_out[OUT], min_out[OUT];
-
-/* 写训练数据 */
-/*
-void write_test() {
-
-	FILE *fp_input, *fp_output;
-	double opeator1, opeator2;
-	int i;
-	srand((unsigned int)time(NULL));
-	if ((fp_input = fopen(TRAIN_FILE_INPUT, "w")) == NULL) {
-		fprintf(stderr, "can not open the in file\n");
-		exit(EXIT_FAILURE);
-	}
-	if ((fp_output = fopen(TRAIN_FILE_OUTPUT, "w")) == NULL) {
-		fprintf(stderr, "can not open the out file\n");
-		exit(EXIT_FAILURE);
-	}
-
-	for (i = 0; i < DATA; ++i) {
-		opeator1 = rand() % 1000 / 100.0;
-		opeator2 = rand() % 1000 / 100.0;
-		fprintf(fp_input, "%lf  %lf\n", opeator1, opeator2);
-		fprintf(fp_output, "%lf \n", opeator1 * opeator2);
-	}
-	fclose(fp_input);
-	fclose(fp_output);
-}
-*/
+double max_in[IN], min_in[IN], max_out[OUT], min_out[OUT];  /* 训练数据的最值，用于归一化 */
 
 /* 读训练数据 */
 void read_data() {
@@ -140,18 +112,18 @@ void comput_output(int var) {
 	double sum;
 	for (i = 0; i < NEURON; i++) {
 		sum = 0;
-		for (j = 0; j < IN; j++)
+		for (j = 0; j < IN; j++) {
 			sum += input_weight[i][j] * data_in[var][j];
-
+		}
 		activate[i] = 1 / (1 + exp(-1 * sum));
 	}
 
 	for (i = 0; i < OUT; i++) {
 		sum = 0;
-		for (j = 0; j < NEURON; j++)
+		for (j = 0; j < NEURON; j++) {
 			sum += output_weight[i][j] * activate[j];
-
-		output_data[i]=sum;
+		}
+		output_data[i]= sum;
 	}
 }
 
@@ -165,18 +137,19 @@ void back_update(int var) {
 		for (j = 0; j < OUT; j++) {
 			tmp += (output_data[j] - data_out[var][j]) * output_weight[j][i];
 
-			output_delta[j][i] = A * output_delta[j][i] + B * (output_data[j]-data_out[var][j]) * activate[i];
+			output_delta[j][i] = LEARN * output_delta[j][i] + LEARN * (output_data[j]-data_out[var][j]) * activate[i];
 			output_weight[j][i] -= output_delta[j][i];
 		}
 
 		for (j = 0; j < IN; j++) {
-			input_delta[i][j] = a * input_delta[i][j] + b * tmp * activate[i] * (1-activate[i]) * data_in[var][j];
+			input_delta[i][j] = LEARN * input_delta[i][j] + LEARN * tmp * activate[i] * (1-activate[i]) * data_in[var][j];
 			input_weight[i][j] -= input_delta[i][j];
 		}
 	}
 }
 
-double result(double var1,double var2) {
+/*double result(double var1,double var2) {
+
 	int i,j;
 	double sum;
 
@@ -193,30 +166,59 @@ double result(double var1,double var2) {
 		sum += output_weight[0][j] * activate[j];
 
 	return sum * (max_out[0] - min_out[0] + 1) + min_out[0] - 1;
-}
-
-/*void write_neuron() {
-	FILE *fp1;
-	int i,j;
-	if((fp1=fopen("./neuron.txt","w"))==NULL)
-	{
-		printf("can not open the neuron file\n");
-		exit(0);
-	}
-	for (i = 0; i < NEURON; ++i)	
-		for (j = 0; j < IN; ++j){
-			fprintf(fp1,"%lf ",w[i][j]);
-		}
-	fprintf(fp1,"\n\n\n\n");
-
-	for (i = 0; i < NEURON; ++i)	
-		for (j = 0; j < OUT; ++j){
-			fprintf(fp1,"%lf ",v[j][i]);
-		}
-
-	fclose(fp1);
 }*/
 
+/* 将训练后的权值写入到文件中 */
+void write_neuron() {
+
+	int i, j;
+	FILE *fp;
+	if ((fp = fopen(NEURON_WEIGHT, "w")) == NULL) {
+		fprintf(stderr, "can not open the neuron file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < NEURON; i++) {	
+		for (j = 0; j < IN; j++) {
+			fprintf(fp, "%lf ", input_weight[i][j]);
+		}
+		fprintf(fp, "\n");
+	}
+	fprintf(fp, "\n");
+
+	for (i = 0; i < OUT; i++) {	
+		for (j = 0; j < NEURON; j++) {
+			fprintf(fp, "%lf ", output_weight[i][j]);
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+}
+
+/* 从文件中读取训练好的权值 */
+void read_neuron() {
+
+	int i, j;
+	FILE *fp;
+	if ((fp = fopen(NEURON_WEIGHT, "r")) == NULL) {
+		fprintf(stderr, "can not open the neuron file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < NEURON; i++) {	
+		for (j = 0; j < IN; j++) {
+			fscanf(fp, "%lf", &input_weight[i][j]);
+		}
+	}
+	for (i = 0; i < OUT; i++) {	
+		for (j = 0; j < NEURON; j++) {
+			fscanf(fp, "%lf", &output_weight[i][j]);
+		}
+	}
+	fclose(fp);
+}
+
+/* 训练神经网络 */
 void  train_network() {
 
 	int i, j, time = 0;
@@ -233,13 +235,31 @@ void  train_network() {
 	} while (time < TRAINC && error / DATA > ERROR);
 }
 
+/* 输出权值，用于调试 */
+void print_weight() {
 
+	int i, j;
+	for (i = 0; i < NEURON; i++) {	
+		for (j = 0; j < IN; j++) {
+			printf("%lf ", input_weight[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+
+	for (i = 0; i < OUT; i++) {	
+		for (j = 0; j < NEURON; j++) {
+			printf("%lf ", output_weight[i][j]);
+		}
+		printf("\n");
+	}
+}
 
 int main(int argc, char *argv[]) {
-	//write_test();
 	read_data();
 	init_bpnetwork();
 	train_network();
-	//writeNEURON();
+	//write_neuron();
+	//read_neuron();
 	return 0;
 }
