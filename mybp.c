@@ -3,11 +3,8 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include "mycode.h"
 
-#define DATA  27  /* 训练样本的数量 */
-#define IN 4  /* 每个样本有多少输入变量 */
-#define OUT 1  /* 每个样本有多少个输出变量 */
-#define NEURON 38  /* 神经元数量 */
 #define TRAINC 2000000000  /* 训练次数上限 */
 
 /* 学习率 */
@@ -26,22 +23,19 @@
 /* 输入命令的最大长度 */
 #define CMD_SIZE 10
 
-#define TRUE 1
-#define FALSE 0
 
-double data_in[DATA][IN];  /* 存储DATA个样本，每个样本IN个输入 */
+static double data_in[DATA][IN];  /* 存储DATA个样本，每个样本IN个输入 */
 double data_out[DATA][OUT];  /* 存储DATA个样本，每个样本OUT个输出 */
 double input_weight[NEURON][IN];  /* 输入对神经元的权重 */
 double output_weight[OUT][NEURON];  /* 神经元对输出的权重 */
-double input_delta[NEURON][IN];  /* 输入权重的修正量 */
-double output_delta[OUT][NEURON];  /* 输出权重的修正量 */
-double activate[NEURON];  /* 神经元激活函数对外的输出 */
+static double input_delta[NEURON][IN];  /* 输入权重的修正量 */
+static double output_delta[OUT][NEURON];  /* 输出权重的修正量 */
+static double activate[NEURON];  /* 神经元激活函数对外的输出 */
 double output_data[OUT];  /* BP神经网络的输出 */
-double error;  /* 误差 */
-double max_in[IN], min_in[IN], max_out[OUT], min_out[OUT];  /* 训练数据的最值，用于归一化 */
+static double max_in[IN], min_in[IN], max_out[OUT], min_out[OUT];  /* 训练数据的最值，用于归一化 */
 
 /* 读训练数据 */
-void read_data() {
+void read_data(void) {
 
 	FILE *fp_tmp;
 	int i, j;
@@ -67,7 +61,7 @@ void read_data() {
 }
 
 /* 初始化BP神经网络 */
-void init_bpnetwork() {
+void init_bpnetwork(void) {
 
 	int i, j;
 
@@ -164,6 +158,7 @@ void back_update(int var) {
 void  train_network() {
 
 	int i, j, time = 0;
+	double error;  /* 误差 */
 	do {
 		error = 0.0;
 		for (i = 0; i < DATA; i++) {
@@ -173,7 +168,7 @@ void  train_network() {
 			back_update(i);
 		}
 		time++;
-		//printf("%d  %lf\n",time, error / DATA);
+		//printf("%d  %lf\n",time, error);
 	} while (time < TRAINC && error / DATA > ERROR);
 	printf("train finish\n");
 }
@@ -313,7 +308,7 @@ void test_network(double *test_in) {
 	}
 }
 
-int main(int argc, char *argv[]) {
+/*int main(int argc, char *argv[]) {
 	char cmd[CMD_SIZE];	
 	double test_in[IN];
 	int i;
@@ -346,4 +341,4 @@ int main(int argc, char *argv[]) {
 	}
 
 	return 0;
-}
+}*/
