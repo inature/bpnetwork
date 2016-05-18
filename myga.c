@@ -266,7 +266,7 @@ static void mutate(void) {
 
 /* 遗传算法的对外函数 */
 
-void ga_interface() {
+void ga_interface(void) {
 	init_population();                            /* 初始化种群数据结构 */
 	evaluate();                                   /* 对初代进行评估 */
 	keep_the_best();                              /* 寻找最优个体并保存 */
@@ -282,7 +282,7 @@ void ga_interface() {
 	copy_gene_to_bpweight(population[POPSIZE].gene, input_weight, output_weight);
 }
 
-void read_data(void);
+/*void read_data(void);
 void init_bpnetwork(void);
 void print_weight();
 int main() {
@@ -296,4 +296,4 @@ int main() {
 	printf("\n");
 	print_weight();
 	return 0;
-}
+}*/
