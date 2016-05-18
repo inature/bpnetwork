@@ -5,14 +5,15 @@
 #include "mycode.h"
 
 
-#define POPSIZE 50                                          /* 种群大小 */
-#define MAXGENS 10000                                         /* 世代数 */
+#define POPSIZE 50                                            /* 种群大小 */
+#define MAXGENS 18000                                         /* 世代数 */
 #define NVARS ((NEURON * IN + OUT * NEURON))                  /* 基因型个数*/
 #define PXOVER 0.8                                            /* 交叉概率 */
 #define PMUTATION 0.15                                        /* 突变概率 */
-#define UPPER_BOUND 5.0                                       /* 基因值的上界 */
-#define LOWER_BOUND -5.0                                      /* 基因值的下界 */
-#define MAX_DOUBLE DBL_MAX                                     /* 确定一个double上界 */
+#define UPPER_BOUND 2.5                                       /* 基因值的上界 */
+#define LOWER_BOUND -3.5                                      /* 基因值的下界 */
+#define MAX_DOUBLE 1000.0                                     /* 确定一个double上界 */
+#define MAX_FITNESS 998.8                                     /* 最大适应度，当最大的适应度达到这个值，停止迭代 */
 
 static int generation;                  /* 目前是第几代 */
 
@@ -68,20 +69,6 @@ static void copy_gene_to_bpweight(double *gene, double input_weight[NEURON][IN],
 	for (j = 0; j < OUT; j++)
 		for (k = 0; k < NEURON; k++) 
 			output_weight[j][k] = gene[i++];
-	for (i = 0; i < NEURON; i++) {
-		for (j = 0; j < IN; j++) {
-			printf("%lf ", input_weight[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	for (i = 0; i < OUT; i++) {	
-		for (j = 0; j < NEURON; j++) {
-			printf("%lf ", output_weight[i][j]);
-		}
-		printf("\n");
-	}
 }
 
 /* 评估函数 */
@@ -100,8 +87,8 @@ static void evaluate(void) {
 				error += fabs((output_data[j] - data_out[i][j]) / data_out[i][j]);
 		}
 		/* error越小适应度越高，这里对error做个差值，使得fitness越高适应度越高 */
-		printf("error: %lf\n", error);
-		population[mem].fitness = MAX_DOUBLE - error;
+		population[mem].fitness = MAX_DOUBLE - error / DATA;
+		//printf("mem: %d\tfitness: %lf\n", mem, population[mem].fitness);
 	}
 }
 
@@ -112,6 +99,7 @@ static void keep_the_best(void) {
 	int i;
 	int cur_best = 0; /* 最优个体的索引 */
 
+	population[POPSIZE].fitness = 0.0;
 	for (mem = 0; mem < POPSIZE; mem++) {
 		if (population[mem].fitness > population[POPSIZE].fitness) {
 			cur_best = mem;
@@ -122,7 +110,7 @@ static void keep_the_best(void) {
 	/* 拷贝最优个体的基因 */
 	for (i = 0; i < NVARS; i++)
 		population[POPSIZE].gene[i] = population[cur_best].gene[i];
-	printf("best fitness: %d\n", population[POPSIZE].fitness);
+	printf("%d  %lf\n",generation, population[POPSIZE].fitness);
 }
 
 /* 前一个种群中最优个体存放在数组最后一位，如果目前种群的最优个体
@@ -169,7 +157,7 @@ static void elitist(void) {
 			population[worst_mem].gene[i] = population[POPSIZE].gene[i];
 		population[worst_mem].fitness = population[POPSIZE].fitness;
 	} 
-	printf("best fitness: %d\n", population[POPSIZE].fitness);
+	printf("%lf\n", population[POPSIZE].fitness);
 }
 
 /* 选出新的种群 */
@@ -282,17 +270,30 @@ void ga_interface() {
 	init_population();                            /* 初始化种群数据结构 */
 	evaluate();                                   /* 对初代进行评估 */
 	keep_the_best();                              /* 寻找最优个体并保存 */
-	for (generation = 0; generation < MAXGENS; generation++) {
-		printf("generation: %d\n", generation);
+	for (generation = 1; population[POPSIZE].fitness < MAX_FITNESS; generation++) {
+		printf("%d  ", generation);
 		select_newpopulation();                   /* 选出新种群 */
 		crossover();                              /* 个体基因交叉 */
 		mutate();                                 /* 基因变异 */
 		evaluate();                               /* 对新的种群进行评估 */
 		elitist();                                /* 确保最优个体得以保存 */
 	}
+	/* 迭代结束后，将最优个体的基因拷贝到BP的权值中 */
+	copy_gene_to_bpweight(population[POPSIZE].gene, input_weight, output_weight);
 }
 
+void read_data(void);
+void init_bpnetwork(void);
+void print_weight();
 int main() {
+	read_data();
+	init_bpnetwork();
 	ga_interface();
+	int i;
+	for (i = 0; i < NVARS; i++) {
+		printf("%lf  ", population[POPSIZE].gene[i]);
+	}
+	printf("\n");
+	print_weight();
 	return 0;
 }

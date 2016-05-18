@@ -168,7 +168,7 @@ void  train_network() {
 			back_update(i);
 		}
 		time++;
-		//printf("%d  %lf\n",time, error);
+		printf("%d  %lf\n",time, error / DATA);
 	} while (time < TRAINC && error / DATA > ERROR);
 	printf("train finish\n");
 }
@@ -339,6 +339,10 @@ void test_network(double *test_in) {
 			break;
 		}
 	}
+			read_data();
+			init_bpnetwork();
+			train_network();
+			write_neuron();
 
 	return 0;
 }*/
