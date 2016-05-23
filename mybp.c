@@ -13,7 +13,7 @@
 
 /* 误差 */
 
-#define ERROR 0.001
+#define ERROR 0.012
 
 /* 存放训练数据的文件 */
 
